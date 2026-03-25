@@ -1,0 +1,16 @@
+{
+  "name": "DanskeAbe Student",
+  "short_name": "DanskeAbe",
+  "start_url": "./test.html?role=student",
+  "display": "standalone",
+  "background_color": "#f6f3e8",
+  "theme_color": "#1d6f42",
+  "icons": [
+    {
+      "src": "./public/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

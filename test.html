@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DanskeAbe Test</title>
+  <meta name="theme-color" content="#1d6f42" />
+  <link rel="manifest" href="./manifest-test.webmanifest" />
+  <style>
+    :root {
+      --bg: #f6f3e8;
+      --panel: #ffffff;
+      --ink: #1f2a24;
+      --muted: #66736a;
+      --green: #1d6f42;
+      --orange: #c05a2b;
+      --line: #d4ddcf;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Segoe UI, Tahoma, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at top, #fffbe9, var(--bg) 70%);
+    }
+
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 6px 20px rgba(18, 38, 24, 0.08);
+      margin-bottom: 12px;
+    }
+
+    .half { flex: 1 1 420px; }
+
+    h1, h2, h3 { margin: 0 0 8px; }
+
+    p { margin: 6px 0; }
+
+    .muted { color: var(--muted); font-size: 13px; }
+
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    textarea { min-height: 72px; }
+
+    button {
+      border: none;
+      cursor: pointer;
+      color: #fff;
+      background: var(--green);
+    }
+
+    button.alt { background: var(--orange); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .actions button { width: auto; min-width: 110px; }
+
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .chip {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 12px;
+      background: #f2f7f2;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 7px 6px;
+      vertical-align: top;
+    }
+
+    .popup {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      width: min(390px, calc(100vw - 28px));
+      border: 2px solid var(--green);
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 999;
+    }
+
+    .popup.show { display: block; }
+
+    .hidden { display: none !important; }
+
+    .monkey {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .face {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #8f5b34;
+      position: relative;
+    }
+
+    .face::before, .face::after {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #b98359;
+      top: 17px;
+    }
+
+    .face::before { left: -6px; }
+    .face::after { right: -6px; }
+
+    .eye {
+      position: absolute;
+      top: 20px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #1a120c;
+    }
+
+    .eye.left { left: 17px; }
+    .eye.right { right: 17px; }
+
+    .mouth {
+      position: absolute;
+      left: 17px;
+      top: 30px;
+      width: 18px;
+      height: 10px;
+      border-bottom: 2px solid #1a120c;
+      border-radius: 0 0 10px 10px;
+    }
+
+    @media (max-width: 740px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>DanskeAbe Single File Test</h1>
+    <p class="muted">Open this file directly in your browser. No localhost needed.</p>
+
+    <div class="row" id="teacherSection">
+      <section class="panel half">
+        <h2>Teacher Panel</h2>
+        <div class="grid">
+          <div>
+            <label>Class code</label>
+            <input id="classCode" />
+          </div>
+          <div>
+            <label>Popups per day</label>
+            <input id="popupCount" type="number" min="1" max="50" />
+          </div>
+          <div>
+            <label>Minimum gap (minutes)</label>
+            <input id="minGap" type="number" min="1" max="180" />
+          </div>
+          <div>
+            <label>Random extra window (minutes)</label>
+            <input id="randomExtra" type="number" min="0" max="180" />
+          </div>
+          <div style="grid-column: 1 / -1;">
+            <label>Update JSON URL (shared for students)</label>
+            <input id="syncUrl" placeholder="https://raw.githubusercontent.com/.../danskabe-update.json" />
+          </div>
+          <div>
+            <label>GitHub owner</label>
+            <input id="ghOwner" placeholder="your-username" />
+          </div>
+          <div>
+            <label>GitHub repo</label>
+            <input id="ghRepo" placeholder="your-repo" />
+          </div>
+          <div>
+            <label>Branch</label>
+            <input id="ghBranch" placeholder="main" />
+          </div>
+          <div>
+            <label>JSON path in repo</label>
+            <input id="ghPath" placeholder="danskabe-update.json" />
+          </div>
+          <div style="grid-column: 1 / -1;">
+            <label>GitHub token (fine-grained, contents write)</label>
+            <input id="ghToken" type="password" placeholder="Paste token once on teacher device" />
+          </div>
+        </div>
+        <p style="margin:8px 0 4px;">Enabled categories</p>
+        <div class="chips">
+          <label class="chip"><input type="checkbox" class="cat" value="vocab" style="width:auto;" /> vocab</label>
+          <label class="chip"><input type="checkbox" class="cat" value="phrases" style="width:auto;" /> phrases</label>
+          <label class="chip"><input type="checkbox" class="cat" value="time" style="width:auto;" /> time</label>
+          <label class="chip"><input type="checkbox" class="cat" value="day_of_week" style="width:auto;" /> day_of_week</label>
+        </div>
+        <div class="actions" style="margin-top:10px;">
+          <button id="saveSettings">Save settings</button>
+          <button id="exportUpdate" class="alt">Export update JSON</button>
+          <button id="resetData" class="alt">Reset all data</button>
+        </div>
+        <p class="muted" id="teacherMsg"></p>
+      </section>
+
+      <section class="panel half">
+        <h2>Add Question</h2>
+        <div class="grid">
+          <div>
+            <label>Category</label>
+            <select id="qCategory">
+              <option value="vocab">vocab</option>
+              <option value="phrases">phrases</option>
+              <option value="time">time</option>
+              <option value="day_of_week">day_of_week</option>
+            </select>
+          </div>
+          <div>
+            <label>Answer</label>
+            <input id="qAnswer" />
+          </div>
+        </div>
+        <div style="margin-top:8px;">
+          <label>Prompt</label>
+          <textarea id="qPrompt"></textarea>
+        </div>
+        <div class="actions" style="margin-top:10px;">
+          <button id="addQuestion">Add</button>
+        </div>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Category</th><th>Prompt</th><th>Answer</th><th></th></tr>
+          </thead>
+          <tbody id="qTable"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <section class="panel" id="studentSection">
+      <h2>Student Panel</h2>
+      <div class="grid">
+        <div>
+          <label>Join class code</label>
+          <input id="joinCode" placeholder="Enter class code" />
+        </div>
+        <div>
+          <label>Fast test mode</label>
+          <select id="fastMode">
+            <option value="off">off (real minutes)</option>
+            <option value="on">on (seconds for testing)</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions" style="margin-top:10px;">
+        <button id="joinBtn">Join and start</button>
+        <button id="showNow" class="alt">Show popup now</button>
+        <button id="installBtn" class="alt" style="display:none;">Install app</button>
+      </div>
+      <p id="studentStatus" class="muted"></p>
+      <p id="syncStatus" class="muted"></p>
+    </section>
+  </main>
+
+  <div class="popup" id="popup">
+    <div class="monkey">
+      <div class="face">
+        <span class="eye left"></span>
+        <span class="eye right"></span>
+        <span class="mouth"></span>
+      </div>
+      <div>
+        <p style="margin:0; font-size:12px; color:#66736a;">DanskeAbe asks</p>
+        <p id="popCat" style="margin:2px 0 0; font-size:12px; color:#66736a;"></p>
+      </div>
+    </div>
+    <h3 id="popPrompt"></h3>
+    <div class="actions">
+      <button id="knowBtn">I know</button>
+      <button id="dontBtn" class="alt">I do not know</button>
+    </div>
+    <p id="popFeedback" class="muted"></p>
+  </div>
+
+  <script>
+    const STORE_KEY = "danskabe_test_data_v1";
+    const STUDENT_KEY = "danskabe_test_student_v1";
+    const TEACHER_SYNC_KEY = "danskabe_teacher_sync_v1";
+    const params = new URLSearchParams(window.location.search);
+    const role = (params.get("role") || "both").toLowerCase();
+    const prefillCode = params.get("code") || "";
+    const prefillSync = params.get("sync") || "";
+    let deferredInstallPrompt = null;
+
+    function defaultStore() {
+      return {
+        settings: {
+          classCode: "DANSK101",
+          popupCountPerDay: 10,
+          minGapMinutes: 30,
+          randomExtraMinutes: 30,
+          enabledCategories: ["vocab", "phrases", "time", "day_of_week"],
+          syncUrl: "",
+          datasetVersion: 1,
+        },
+        nextQuestionId: 5,
+        questions: [
+          { id: 1, category: "vocab", prompt: "Translate apple", answer: "aeble" },
+          { id: 2, category: "phrases", prompt: "How to say good morning?", answer: "godmorgen" },
+          { id: 3, category: "time", prompt: "Hvad er klokken?", answer: "Klokken er to" },
+          { id: 4, category: "day_of_week", prompt: "How to say Monday?", answer: "mandag" },
+        ]
+      };
+    }
+
+    function loadStore() {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (!raw) {
+        const d = defaultStore();
+        localStorage.setItem(STORE_KEY, JSON.stringify(d));
+        return d;
+      }
+      return JSON.parse(raw);
+    }
+
+    function saveStore(d) {
+      localStorage.setItem(STORE_KEY, JSON.stringify(d));
+    }
+
+    function loadTeacherSync() {
+      const raw = localStorage.getItem(TEACHER_SYNC_KEY);
+      if (!raw) {
+        return {
+          owner: "",
+          repo: "",
+          branch: "main",
+          path: "danskabe-update.json",
+          token: "",
+        };
+      }
+      return JSON.parse(raw);
+    }
+
+    function saveTeacherSync(cfg) {
+      localStorage.setItem(TEACHER_SYNC_KEY, JSON.stringify(cfg));
+    }
+
+    function loadStudent() {
+      const raw = localStorage.getItem(STUDENT_KEY);
+      if (!raw) {
+        return {
+          joinedCode: "",
+          shownToday: 0,
+          dayKey: new Date().toDateString(),
+          perQuestionDailyCount: {},
+          datasetVersionSeen: 0,
+          lastPopupAt: 0,
+          currentQuestion: null,
+          timer: null,
+        };
+      }
+      return JSON.parse(raw);
+    }
+
+    function saveStudent(s) {
+      const safe = { ...s, timer: null };
+      localStorage.setItem(STUDENT_KEY, JSON.stringify(safe));
+    }
+
+    let store = loadStore();
+    let student = loadStudent();
+    let teacherSync = loadTeacherSync();
+
+    const el = {
+      classCode: document.getElementById("classCode"),
+      popupCount: document.getElementById("popupCount"),
+      minGap: document.getElementById("minGap"),
+      randomExtra: document.getElementById("randomExtra"),
+      syncUrl: document.getElementById("syncUrl"),
+      ghOwner: document.getElementById("ghOwner"),
+      ghRepo: document.getElementById("ghRepo"),
+      ghBranch: document.getElementById("ghBranch"),
+      ghPath: document.getElementById("ghPath"),
+      ghToken: document.getElementById("ghToken"),
+      cats: [...document.querySelectorAll(".cat")],
+      teacherMsg: document.getElementById("teacherMsg"),
+      qCategory: document.getElementById("qCategory"),
+      qAnswer: document.getElementById("qAnswer"),
+      qPrompt: document.getElementById("qPrompt"),
+      qTable: document.getElementById("qTable"),
+      joinCode: document.getElementById("joinCode"),
+      fastMode: document.getElementById("fastMode"),
+      studentStatus: document.getElementById("studentStatus"),
+      teacherSection: document.getElementById("teacherSection"),
+      studentSection: document.getElementById("studentSection"),
+      installBtn: document.getElementById("installBtn"),
+      syncStatus: document.getElementById("syncStatus"),
+      popup: document.getElementById("popup"),
+      popCat: document.getElementById("popCat"),
+      popPrompt: document.getElementById("popPrompt"),
+      popFeedback: document.getElementById("popFeedback"),
+      knowBtn: document.getElementById("knowBtn"),
+      dontBtn: document.getElementById("dontBtn"),
+    };
+
+    function bumpVersion() {
+      store.settings.datasetVersion += 1;
+      student.datasetVersionSeen = 0;
+      student.perQuestionDailyCount = {};
+      student.shownToday = 0;
+      saveStudent(student);
+    }
+
+    function resetDailyIfNeeded() {
+      const nowDay = new Date().toDateString();
+      if (student.dayKey !== nowDay) {
+        student.dayKey = nowDay;
+        student.shownToday = 0;
+        student.perQuestionDailyCount = {};
+      }
+      if (student.datasetVersionSeen !== store.settings.datasetVersion) {
+        student.datasetVersionSeen = store.settings.datasetVersion;
+        student.shownToday = 0;
+        student.perQuestionDailyCount = {};
+      }
+    }
+
+    function selectedCats() {
+      return el.cats.filter(c => c.checked).map(c => c.value);
+    }
+
+    function renderTeacher() {
+      el.classCode.value = store.settings.classCode;
+      el.popupCount.value = store.settings.popupCountPerDay;
+      el.minGap.value = store.settings.minGapMinutes;
+      el.randomExtra.value = store.settings.randomExtraMinutes;
+      el.syncUrl.value = store.settings.syncUrl || "";
+      el.ghOwner.value = teacherSync.owner || "";
+      el.ghRepo.value = teacherSync.repo || "";
+      el.ghBranch.value = teacherSync.branch || "main";
+      el.ghPath.value = teacherSync.path || "danskabe-update.json";
+      el.ghToken.value = teacherSync.token || "";
+      el.cats.forEach(c => c.checked = store.settings.enabledCategories.includes(c.value));
+      renderQuestions();
+    }
+
+    function buildUpdatePayload() {
+      return {
+        app: "danskabe",
+        version: store.settings.datasetVersion,
+        updatedAt: new Date().toISOString(),
+        settings: {
+          classCode: store.settings.classCode,
+          popupCountPerDay: store.settings.popupCountPerDay,
+          minGapMinutes: store.settings.minGapMinutes,
+          randomExtraMinutes: store.settings.randomExtraMinutes,
+          enabledCategories: store.settings.enabledCategories,
+          syncUrl: store.settings.syncUrl || "",
+        },
+        questions: store.questions,
+      };
+    }
+
+    function buildRawUrl(owner, repo, branch, filePath) {
+      const cleanPath = (filePath || "danskabe-update.json").replace(/^\/+/, "");
+      return "https://raw.githubusercontent.com/" + owner + "/" + repo + "/" + branch + "/" + cleanPath;
+    }
+
+    function toBase64Utf8(text) {
+      return btoa(unescape(encodeURIComponent(text)));
+    }
+
+    async function publishUpdateToGitHub(payload) {
+      const cfg = {
+        owner: el.ghOwner.value.trim(),
+        repo: el.ghRepo.value.trim(),
+        branch: (el.ghBranch.value.trim() || "main"),
+        path: (el.ghPath.value.trim() || "danskabe-update.json"),
+        token: el.ghToken.value.trim(),
+      };
+
+      teacherSync = cfg;
+      saveTeacherSync(teacherSync);
+
+      if (!cfg.owner || !cfg.repo || !cfg.path || !cfg.token) {
+        throw new Error("Missing GitHub sync fields");
+      }
+
+      const apiPath = "https://api.github.com/repos/" + cfg.owner + "/" + cfg.repo + "/contents/" + cfg.path;
+      const headers = {
+        Authorization: "Bearer " + cfg.token,
+        Accept: "application/vnd.github+json",
+      };
+
+      let sha = undefined;
+      const currentRes = await fetch(apiPath + "?ref=" + encodeURIComponent(cfg.branch), { headers });
+      if (currentRes.ok) {
+        const currentJson = await currentRes.json();
+        sha = currentJson.sha;
+      }
+
+      const body = {
+        message: "Update DanskAbe dataset to v" + String(payload.version),
+        content: toBase64Utf8(JSON.stringify(payload, null, 2)),
+        branch: cfg.branch,
+      };
+      if (sha) {
+        body.sha = sha;
+      }
+
+      const putRes = await fetch(apiPath, {
+        method: "PUT",
+        headers: {
+          ...headers,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!putRes.ok) {
+        throw new Error("GitHub publish failed");
+      }
+
+      const rawUrl = buildRawUrl(cfg.owner, cfg.repo, cfg.branch, cfg.path);
+      store.settings.syncUrl = rawUrl;
+      saveStore(store);
+      renderTeacher();
+      return rawUrl;
+    }
+
+    function downloadTextFile(filename, text) {
+      const blob = new Blob([text], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function applyRemotePayload(payload) {
+      if (!payload || payload.app !== "danskabe") {
+        return false;
+      }
+
+      const nextVersion = Number(payload.version || 0);
+      if (nextVersion <= Number(store.settings.datasetVersion || 0)) {
+        return false;
+      }
+
+      const s = payload.settings || {};
+      store.settings.classCode = s.classCode || store.settings.classCode;
+      store.settings.popupCountPerDay = Number(s.popupCountPerDay || store.settings.popupCountPerDay);
+      store.settings.minGapMinutes = Number(s.minGapMinutes || store.settings.minGapMinutes);
+      store.settings.randomExtraMinutes = Number(s.randomExtraMinutes || store.settings.randomExtraMinutes);
+      store.settings.enabledCategories = Array.isArray(s.enabledCategories)
+        ? s.enabledCategories
+        : store.settings.enabledCategories;
+      store.settings.syncUrl = s.syncUrl || store.settings.syncUrl || "";
+      store.settings.datasetVersion = nextVersion;
+      store.questions = Array.isArray(payload.questions) ? payload.questions : store.questions;
+
+      const maxId = store.questions.reduce((m, q) => Math.max(m, Number(q.id) || 0), 0);
+      store.nextQuestionId = Math.max(store.nextQuestionId || 1, maxId + 1);
+
+      student.datasetVersionSeen = 0;
+      student.perQuestionDailyCount = {};
+      student.shownToday = 0;
+      saveStudent(student);
+      saveStore(store);
+      renderTeacher();
+      return true;
+    }
+
+    async function tryRemoteSync() {
+      const syncUrl = (store.settings.syncUrl || "").trim();
+      if (!syncUrl) {
+        el.syncStatus.textContent = "No update URL configured.";
+        return;
+      }
+
+      if (!navigator.onLine) {
+        el.syncStatus.textContent = "Offline mode. Waiting for internet to sync updates.";
+        return;
+      }
+
+      try {
+        const response = await fetch(syncUrl, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("Could not fetch update file");
+        }
+        const payload = await response.json();
+        const changed = applyRemotePayload(payload);
+        if (changed) {
+          el.syncStatus.textContent = "New teacher update applied.";
+          scheduleNext();
+        } else {
+          el.syncStatus.textContent = "Already on latest update.";
+        }
+      } catch {
+        el.syncStatus.textContent = "Sync failed. Check update URL or internet.";
+      }
+    }
+
+    function renderQuestions() {
+      el.qTable.innerHTML = "";
+      for (const q of [...store.questions].sort((a, b) => b.id - a.id)) {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          "<td>" + q.id + "</td>" +
+          "<td>" + q.category + "</td>" +
+          "<td>" + q.prompt + "</td>" +
+          "<td>" + q.answer + "</td>" +
+          "<td><button data-del='" + q.id + "' class='alt' style='width:auto;padding:6px 10px;'>Delete</button></td>";
+        el.qTable.appendChild(tr);
+      }
+      [...el.qTable.querySelectorAll("button[data-del]")].forEach(btn => {
+        btn.onclick = () => {
+          const id = Number(btn.getAttribute("data-del"));
+          store.questions = store.questions.filter(q => q.id !== id);
+          bumpVersion();
+          saveStore(store);
+          renderQuestions();
+          el.teacherMsg.textContent = "Question removed. Click Save settings to push update to students.";
+        };
+      });
+    }
+
+    function studentQuestionPool() {
+      const enabled = store.questions.filter(q => store.settings.enabledCategories.includes(q.category));
+      const withCount = enabled.map(q => ({ q, count: student.perQuestionDailyCount[q.id] || 0 }));
+      const maxTwo = withCount.filter(x => x.count < 2);
+      const unseen = maxTwo.filter(x => x.count === 0);
+      const pool = unseen.length ? unseen : maxTwo;
+      return pool.map(x => x.q);
+    }
+
+    function pickQuestion() {
+      const pool = studentQuestionPool();
+      if (!pool.length) return null;
+      const idx = Math.floor(Math.random() * pool.length);
+      return pool[idx];
+    }
+
+    function scheduleNext() {
+      if (student.timer) {
+        clearTimeout(student.timer);
+        student.timer = null;
+      }
+
+      resetDailyIfNeeded();
+
+      if (student.joinedCode !== store.settings.classCode) {
+        el.studentStatus.textContent = "Join correct class code first.";
+        saveStudent(student);
+        return;
+      }
+
+      if (student.shownToday >= store.settings.popupCountPerDay) {
+        el.studentStatus.textContent = "Daily popup limit reached.";
+        saveStudent(student);
+        return;
+      }
+
+      const fast = el.fastMode.value === "on";
+      const minMs = fast ? 5000 : store.settings.minGapMinutes * 60 * 1000;
+      const extraMs = fast
+        ? 7000
+        : Math.max(0, store.settings.randomExtraMinutes) * 60 * 1000;
+      const randMs = minMs + Math.floor(Math.random() * (extraMs + 1));
+      const now = Date.now();
+      const earliest = student.lastPopupAt ? student.lastPopupAt + minMs : now;
+      const delay = Math.max(randMs, earliest - now);
+
+      el.studentStatus.textContent = "Next popup scheduled.";
+      student.timer = setTimeout(showPopup, delay);
+      saveStudent(student);
+    }
+
+    function showPopup() {
+      resetDailyIfNeeded();
+      const q = pickQuestion();
+      if (!q) {
+        el.studentStatus.textContent = "No question available (max 2 times each or no enabled categories).";
+        scheduleNext();
+        return;
+      }
+
+      student.currentQuestion = q;
+      student.shownToday += 1;
+      student.lastPopupAt = Date.now();
+      student.perQuestionDailyCount[q.id] = (student.perQuestionDailyCount[q.id] || 0) + 1;
+      saveStudent(student);
+
+      el.popCat.textContent = q.category;
+      el.popPrompt.textContent = q.prompt;
+      el.popFeedback.textContent = "";
+      el.popup.classList.add("show");
+      el.studentStatus.textContent = "Popup shown " + student.shownToday + "/" + store.settings.popupCountPerDay + " today.";
+    }
+
+    function closePopupAndSchedule() {
+      el.popup.classList.remove("show");
+      student.currentQuestion = null;
+      saveStudent(student);
+      scheduleNext();
+    }
+
+    document.getElementById("saveSettings").onclick = async () => {
+      const cats = selectedCats();
+      if (!cats.length) {
+        el.teacherMsg.textContent = "Select at least one category.";
+        return;
+      }
+      store.settings.classCode = el.classCode.value.trim() || "DANSK101";
+      store.settings.popupCountPerDay = Math.max(1, Number(el.popupCount.value || 1));
+      store.settings.minGapMinutes = Math.max(1, Number(el.minGap.value || 30));
+      store.settings.randomExtraMinutes = Math.max(0, Number(el.randomExtra.value || 30));
+      store.settings.syncUrl = el.syncUrl.value.trim();
+      store.settings.enabledCategories = cats;
+      bumpVersion();
+      saveStore(store);
+
+      const payload = buildUpdatePayload();
+      try {
+        const remoteUrl = await publishUpdateToGitHub(payload);
+        el.teacherMsg.textContent = "Saved and synced to students. Update URL: " + remoteUrl;
+      } catch {
+        store.settings.syncUrl = el.syncUrl.value.trim();
+        saveStore(store);
+        el.teacherMsg.textContent = "Saved locally. Auto-sync publish failed. Check GitHub fields/token.";
+      }
+
+      renderTeacher();
+      scheduleNext();
+    };
+
+    document.getElementById("exportUpdate").onclick = () => {
+      const payload = buildUpdatePayload();
+      downloadTextFile("danskabe-update.json", JSON.stringify(payload, null, 2));
+      el.teacherMsg.textContent = "Exported danskabe-update.json. Upload this file to your shared GitHub URL.";
+    };
+
+    document.getElementById("addQuestion").onclick = () => {
+      const category = el.qCategory.value;
+      const prompt = el.qPrompt.value.trim();
+      const answer = el.qAnswer.value.trim();
+      if (!prompt || !answer) {
+        el.teacherMsg.textContent = "Prompt and answer are required.";
+        return;
+      }
+      store.questions.push({
+        id: store.nextQuestionId++,
+        category,
+        prompt,
+        answer,
+      });
+      bumpVersion();
+      saveStore(store);
+      el.qPrompt.value = "";
+      el.qAnswer.value = "";
+      el.teacherMsg.textContent = "Question added. Click Save settings to push update to students.";
+      renderQuestions();
+      scheduleNext();
+    };
+
+    document.getElementById("resetData").onclick = () => {
+      if (!confirm("Reset all teacher and student data in this browser?")) return;
+      localStorage.removeItem(STORE_KEY);
+      localStorage.removeItem(STUDENT_KEY);
+      store = loadStore();
+      student = loadStudent();
+      renderTeacher();
+      renderStudent();
+      el.teacherMsg.textContent = "Reset complete.";
+    };
+
+    document.getElementById("joinBtn").onclick = () => {
+      const code = el.joinCode.value.trim();
+      if (!code) {
+        el.studentStatus.textContent = "Enter class code.";
+        return;
+      }
+      if (code !== store.settings.classCode) {
+        el.studentStatus.textContent = "Wrong class code.";
+        return;
+      }
+      student.joinedCode = code;
+      resetDailyIfNeeded();
+      saveStudent(student);
+      el.studentStatus.textContent = "Joined. Scheduler started.";
+      scheduleNext();
+    };
+
+    document.getElementById("showNow").onclick = () => {
+      if (student.joinedCode !== store.settings.classCode) {
+        el.studentStatus.textContent = "Join class first.";
+        return;
+      }
+      showPopup();
+    };
+
+    el.knowBtn.onclick = () => {
+      if (!student.currentQuestion) return;
+      closePopupAndSchedule();
+    };
+
+    el.dontBtn.onclick = () => {
+      if (!student.currentQuestion) return;
+      el.popFeedback.textContent = "Answer: " + student.currentQuestion.answer;
+      setTimeout(closePopupAndSchedule, 1800);
+    };
+
+    function renderStudent() {
+      el.joinCode.value = student.joinedCode || store.settings.classCode;
+      if (prefillSync) {
+        store.settings.syncUrl = prefillSync;
+        saveStore(store);
+      }
+      if (prefillCode) {
+        el.joinCode.value = prefillCode;
+      }
+      resetDailyIfNeeded();
+      saveStudent(student);
+      if (student.joinedCode === store.settings.classCode) {
+        el.studentStatus.textContent = "Joined as student. Ready.";
+      } else {
+        el.studentStatus.textContent = "Not joined yet.";
+      }
+
+      if ((store.settings.syncUrl || "").trim()) {
+        el.syncStatus.textContent = "Auto-sync is enabled.";
+      } else {
+        el.syncStatus.textContent = "Teacher must set update URL first.";
+      }
+    }
+
+    function applyRoleView() {
+      if (role === "teacher") {
+        el.studentSection.classList.add("hidden");
+        return;
+      }
+
+      if (role === "student") {
+        el.teacherSection.classList.add("hidden");
+        if (prefillCode) {
+          student.joinedCode = prefillCode;
+          saveStudent(student);
+          scheduleNext();
+        }
+      }
+    }
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      el.installBtn.style.display = "inline-block";
+    });
+
+    el.installBtn.onclick = async () => {
+      if (!deferredInstallPrompt) {
+        el.studentStatus.textContent = "Use browser menu to install this app.";
+        return;
+      }
+
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      el.installBtn.style.display = "none";
+    };
+
+    renderTeacher();
+    renderStudent();
+    applyRoleView();
+
+    setInterval(() => {
+      if (role === "teacher") {
+        return;
+      }
+      tryRemoteSync();
+    }, 30 * 1000);
+
+    window.addEventListener("online", () => {
+      if (role !== "teacher") {
+        tryRemoteSync();
+      }
+    });
+
+    if (role !== "teacher") {
+      tryRemoteSync();
+    }
+
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      navigator.serviceWorker.register("./sw-test.js").catch(() => {});
+    }
+  </script>
+</body>
+</html>

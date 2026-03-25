@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student - DanskAbe</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#1d6f42" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Student Screen</h1>
+    <p>Join with class code once. No account needed.</p>
+
+    <section class="panel" id="joinPanel">
+      <h2>Join Class</h2>
+      <div class="grid two">
+        <div>
+          <label>Class Code</label>
+          <input id="classCodeInput" placeholder="Example: DANSK101" />
+        </div>
+      </div>
+      <div class="actions" style="margin-top: 10px;">
+        <button id="joinBtn">Join</button>
+      </div>
+      <p id="joinMsg" class="small"></p>
+    </section>
+
+    <section class="panel" id="statusPanel" style="display:none;">
+      <h2>Status</h2>
+      <p id="statusText">Waiting for next popup...</p>
+      <p class="small">Keep this page open. It works on phone and desktop browser.</p>
+    </section>
+  </main>
+
+  <div class="popup" id="popup">
+    <div class="monkey-wrap">
+      <div class="monkey-face" aria-hidden="true">
+        <span class="eye left"></span>
+        <span class="eye right"></span>
+        <span class="mouth"></span>
+      </div>
+      <div>
+        <p class="small">DanskeAbe asks:</p>
+        <p class="small" id="popupCategory"></p>
+      </div>
+    </div>
+    <h3 id="popupPrompt"></h3>
+    <div class="actions" style="margin-top: 10px;">
+      <button id="knowBtn">I know</button>
+      <button id="dontKnowBtn" class="secondary">I don't know</button>
+    </div>
+    <p id="feedback" class="small"></p>
+  </div>
+
+  <script>
+    const joinPanel = document.getElementById("joinPanel");
+    const statusPanel = document.getElementById("statusPanel");
+    const joinMsg = document.getElementById("joinMsg");
+    const statusText = document.getElementById("statusText");
+
+    const popup = document.getElementById("popup");
+    const popupCategory = document.getElementById("popupCategory");
+    const popupPrompt = document.getElementById("popupPrompt");
+    const feedback = document.getElementById("feedback");
+    const knowBtn = document.getElementById("knowBtn");
+    const dontKnowBtn = document.getElementById("dontKnowBtn");
+
+    let config = null;
+    let currentQuestion = null;
+    let shownToday = 0;
+    let dayKey = new Date().toDateString();
+    let lastPopupAt = null;
+    let nextTimer = null;
+    let datasetVersion = Number(localStorage.getItem("datasetVersion") || "0");
+    let offlineBank = JSON.parse(localStorage.getItem("offlineQuestionBank") || "[]");
+
+    const deviceId = localStorage.getItem("deviceId") || crypto.randomUUID();
+    localStorage.setItem("deviceId", deviceId);
+
+    async function api(url, method = "GET", body) {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || "Request failed");
+      }
+      return res.json();
+    }
+
+    function getStoredClassCode() {
+      return localStorage.getItem("classCode") || "";
+    }
+
+    function getDailyCounts() {
+      return JSON.parse(localStorage.getItem("dailyCounts") || "{}");
+    }
+
+    function saveDailyCounts(counts) {
+      localStorage.setItem("dailyCounts", JSON.stringify(counts));
+    }
+
+    function bumpLocalCount(questionId) {
+      const today = new Date().toDateString();
+      const counts = getDailyCounts();
+      if (!counts[today]) {
+        counts[today] = {};
+      }
+      counts[today][questionId] = (counts[today][questionId] || 0) + 1;
+      saveDailyCounts(counts);
+    }
+
+    function pickOfflineQuestion() {
+      if (!offlineBank.length) {
+        return null;
+      }
+
+      const today = new Date().toDateString();
+      const counts = getDailyCounts();
+      const todayCounts = counts[today] || {};
+
+      const available = offlineBank.filter((q) => (todayCounts[q.id] || 0) < 2);
+      if (!available.length) {
+        return null;
+      }
+
+      const unseen = available.filter((q) => (todayCounts[q.id] || 0) === 0);
+      const pool = unseen.length ? unseen : available;
+      const index = Math.floor(Math.random() * pool.length);
+      return pool[index];
+    }
+
+    async function syncQuestionBank(force = false) {
+      const classCode = getStoredClassCode();
+      if (!classCode) {
+        return;
+      }
+
+      if (!navigator.onLine && !force) {
+        return;
+      }
+
+      try {
+        const latestConfig = await api("/api/public-config");
+        config = latestConfig;
+        const latestVersion = Number(latestConfig.datasetVersion || 0);
+        if (!force && latestVersion === datasetVersion && offlineBank.length) {
+          return;
+        }
+
+        const bank = await api(`/api/student/question-bank?classCode=${encodeURIComponent(classCode)}`);
+        datasetVersion = Number(bank.datasetVersion || latestVersion || 0);
+        offlineBank = Array.isArray(bank.questions) ? bank.questions : [];
+        localStorage.setItem("datasetVersion", String(datasetVersion));
+        localStorage.setItem("offlineQuestionBank", JSON.stringify(offlineBank));
+        localStorage.removeItem("dailyCounts");
+      } catch {
+        // Ignore sync errors in offline mode.
+      }
+    }
+
+    function resetDailyIfNeeded() {
+      const nowKey = new Date().toDateString();
+      if (nowKey !== dayKey) {
+        dayKey = nowKey;
+        shownToday = 0;
+      }
+    }
+
+    function scheduleNextPopup() {
+      if (!config) return;
+      clearTimeout(nextTimer);
+      resetDailyIfNeeded();
+
+      if (shownToday >= config.popupCountPerDay) {
+        statusText.textContent = "Daily popup limit reached.";
+        return;
+      }
+
+      const minGapMs = 30 * 60 * 1000;
+      const maxGapMinutes = Math.max(45, Number(config.intervalMinutes || 60) * 2);
+      const maxGapMs = maxGapMinutes * 60 * 1000;
+      const randomGapMs =
+        minGapMs + Math.floor(Math.random() * Math.max(1, maxGapMs - minGapMs + 1));
+
+      const now = Date.now();
+      const earliest = lastPopupAt ? (lastPopupAt + minGapMs) : now;
+      const delay = Math.max(earliest - now, randomGapMs);
+
+      statusText.textContent = "Next popup scheduled randomly with minimum 30-minute gap.";
+      nextTimer = setTimeout(showRandomQuestion, delay);
+    }
+
+    async function showRandomQuestion() {
+      const classCode = getStoredClassCode();
+      if (!classCode) return;
+
+      resetDailyIfNeeded();
+
+      if (shownToday >= config.popupCountPerDay) {
+        statusText.textContent = "Daily popup limit reached.";
+        return;
+      }
+
+      try {
+        if (navigator.onLine) {
+          await syncQuestionBank();
+          currentQuestion = await api(
+            `/api/student/next-question?classCode=${encodeURIComponent(classCode)}&deviceId=${encodeURIComponent(deviceId)}`
+          );
+        } else {
+          currentQuestion = pickOfflineQuestion();
+          if (!currentQuestion) {
+            throw new Error("Offline: no cached questions available for now");
+          }
+          bumpLocalCount(currentQuestion.id);
+        }
+
+        popupCategory.textContent = currentQuestion.category;
+        popupPrompt.textContent = currentQuestion.prompt;
+        feedback.textContent = "";
+        knowBtn.disabled = false;
+        dontKnowBtn.disabled = false;
+        popup.classList.add("show");
+        shownToday += 1;
+        lastPopupAt = Date.now();
+        statusText.textContent = `Popup shown ${shownToday}/${config.popupCountPerDay} today.`;
+      } catch (err) {
+        statusText.textContent = err.message;
+        scheduleNextPopup();
+      }
+    }
+
+    document.getElementById("joinBtn").addEventListener("click", async () => {
+      joinMsg.textContent = "";
+      const classCode = document.getElementById("classCodeInput").value.trim();
+      if (!classCode) {
+        joinMsg.textContent = "Class code is required";
+        return;
+      }
+
+      try {
+        await api("/api/student/join", "POST", { classCode });
+        localStorage.setItem("classCode", classCode);
+        joinPanel.style.display = "none";
+        statusPanel.style.display = "block";
+        statusText.textContent = "Joined. Waiting for first popup...";
+        await showRandomQuestion();
+        scheduleNextPopup();
+      } catch (err) {
+        joinMsg.textContent = err.message;
+      }
+    });
+
+    knowBtn.addEventListener("click", async () => {
+      if (!currentQuestion) return;
+      knowBtn.disabled = true;
+      dontKnowBtn.disabled = true;
+      if (navigator.onLine) {
+        await api("/api/student/answer", "POST", {
+          deviceId,
+          questionId: currentQuestion.id,
+          correct: true,
+        });
+      }
+      popup.classList.remove("show");
+      currentQuestion = null;
+      scheduleNextPopup();
+    });
+
+    dontKnowBtn.addEventListener("click", async () => {
+      if (!currentQuestion) return;
+      knowBtn.disabled = true;
+      dontKnowBtn.disabled = true;
+      feedback.textContent = `Answer: ${currentQuestion.answer}`;
+      if (navigator.onLine) {
+        await api("/api/student/answer", "POST", {
+          deviceId,
+          questionId: currentQuestion.id,
+          correct: false,
+        });
+      }
+
+      setTimeout(() => {
+        popup.classList.remove("show");
+        currentQuestion = null;
+        scheduleNextPopup();
+      }, 2000);
+    });
+
+    window.addEventListener("beforeunload", () => {
+      clearTimeout(nextTimer);
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && !popup.classList.contains("show")) {
+        syncQuestionBank();
+        scheduleNextPopup();
+      }
+    });
+
+    window.addEventListener("online", async () => {
+      await syncQuestionBank(true);
+      statusText.textContent = "Back online. Content synced from teacher updates.";
+      scheduleNextPopup();
+    });
+
+    window.addEventListener("offline", () => {
+      statusText.textContent = "Offline mode: using cached questions.";
+    });
+
+    (async function init() {
+      config = await api("/api/public-config");
+      datasetVersion = Number(config.datasetVersion || datasetVersion || 0);
+      await syncQuestionBank(true);
+      const existing = getStoredClassCode();
+      document.getElementById("classCodeInput").value = existing;
+      if (existing) {
+        joinPanel.style.display = "none";
+        statusPanel.style.display = "block";
+        statusText.textContent = "Class already joined. Waiting for popup...";
+        await showRandomQuestion();
+        scheduleNextPopup();
+      }
+    })();
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && popup.classList.contains("show")) {
+        popup.classList.remove("show");
+        scheduleNextPopup();
+      }
+    });
+
+    document.getElementById("joinPanel").addEventListener("click", () => {
+      joinMsg.textContent = "";
+    });
+
+    document.getElementById("statusPanel").addEventListener("click", () => {
+      resetDailyIfNeeded();
+    });
+
+    document.getElementById("joinPanel").addEventListener("submit", (e) => {
+      e.preventDefault();
+    });
+
+    popup.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+
+    document.body.addEventListener("click", () => {
+      if (!popup.classList.contains("show")) return;
+      popup.classList.remove("show");
+      scheduleNextPopup();
+    });
+  </script>
+  <script src="/pwa.js"></script>
+</body>
+</html>

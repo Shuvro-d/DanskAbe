@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher Admin - DanskAbe</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#1d6f42" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Teacher Admin</h1>
+    <p class="small">Prototype default password: teacher123</p>
+
+    <section id="loginPanel" class="panel">
+      <h2>Login</h2>
+      <div class="grid two">
+        <div>
+          <label>Password</label>
+          <input id="passwordInput" type="password" placeholder="Teacher password" />
+        </div>
+      </div>
+      <div class="actions" style="margin-top: 10px;">
+        <button id="loginBtn">Login</button>
+      </div>
+      <p id="loginMsg" class="small"></p>
+    </section>
+
+    <section id="adminPanel" class="panel" style="display:none;">
+      <div class="row" style="justify-content: space-between;">
+        <h2>Class Settings</h2>
+        <button id="logoutBtn" class="secondary" style="width:auto;">Logout</button>
+      </div>
+      <div class="grid two">
+        <div>
+          <label>Class Code</label>
+          <input id="classCode" />
+        </div>
+        <div>
+          <label>Popups Per Day</label>
+          <input id="popupCount" type="number" min="1" max="100" />
+        </div>
+        <div>
+          <label>Interval (minutes)</label>
+          <input id="intervalMinutes" type="number" min="1" max="240" />
+        </div>
+      </div>
+
+      <p style="margin-top: 14px; margin-bottom: 6px;">Enabled Categories</p>
+      <div class="row">
+        <label><input type="checkbox" value="time" class="cat" style="width:auto;" /> time</label>
+        <label><input type="checkbox" value="day_of_week" class="cat" style="width:auto;" /> day_of_week</label>
+        <label><input type="checkbox" value="vocab" class="cat" style="width:auto;" /> vocab</label>
+        <label><input type="checkbox" value="phrases" class="cat" style="width:auto;" /> phrases</label>
+      </div>
+
+      <div class="actions" style="margin-top: 10px;">
+        <button id="saveSettingsBtn">Save Settings</button>
+      </div>
+      <p id="settingsMsg" class="small"></p>
+    </section>
+
+    <section id="questionPanel" class="panel" style="display:none;">
+      <h2>Add Question</h2>
+      <div class="grid two">
+        <div>
+          <label>Category</label>
+          <select id="qCategory">
+            <option value="time">time</option>
+            <option value="day_of_week">day_of_week</option>
+            <option value="vocab">vocab</option>
+            <option value="phrases">phrases</option>
+          </select>
+        </div>
+        <div>
+          <label>Answer</label>
+          <input id="qAnswer" placeholder="Expected answer" />
+        </div>
+      </div>
+      <div style="margin-top: 10px;">
+        <label>Prompt</label>
+        <textarea id="qPrompt" rows="3" placeholder="Question prompt"></textarea>
+      </div>
+      <div class="actions" style="margin-top: 10px;">
+        <button id="addQuestionBtn">Add</button>
+      </div>
+      <p id="questionMsg" class="small"></p>
+    </section>
+
+    <section id="listPanel" class="panel" style="display:none;">
+      <h2>Question Bank</h2>
+      <table class="table" id="questionTable">
+        <thead>
+          <tr><th>ID</th><th>Category</th><th>Prompt</th><th>Answer</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section id="statsPanel" class="panel" style="display:none;">
+      <h2>Student Stats</h2>
+      <table class="table" id="statsTable">
+        <thead>
+          <tr><th>Category</th><th>Shown</th><th>Correct</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const loginPanel = document.getElementById("loginPanel");
+    const adminPanel = document.getElementById("adminPanel");
+    const questionPanel = document.getElementById("questionPanel");
+    const listPanel = document.getElementById("listPanel");
+    const statsPanel = document.getElementById("statsPanel");
+
+    async function api(url, method = "GET", body) {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || "Request failed");
+      }
+      return res.json();
+    }
+
+    function selectedCategories() {
+      return [...document.querySelectorAll(".cat:checked")].map((x) => x.value);
+    }
+
+    function toggleAdmin(show) {
+      loginPanel.style.display = show ? "none" : "block";
+      adminPanel.style.display = show ? "block" : "none";
+      questionPanel.style.display = show ? "block" : "none";
+      listPanel.style.display = show ? "block" : "none";
+      statsPanel.style.display = show ? "block" : "none";
+    }
+
+    async function loadSettingsAndData() {
+      const settings = await api("/api/teacher/settings");
+      document.getElementById("classCode").value = settings.classCode;
+      document.getElementById("popupCount").value = settings.popupCountPerDay;
+      document.getElementById("intervalMinutes").value = settings.intervalMinutes;
+      document.querySelectorAll(".cat").forEach((cb) => {
+        cb.checked = settings.enabledCategories.includes(cb.value);
+      });
+
+      const questions = await api("/api/teacher/questions");
+      const tbody = document.querySelector("#questionTable tbody");
+      tbody.innerHTML = "";
+      for (const q of questions) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${q.id}</td><td><span class="badge">${q.category}</span></td><td>${q.prompt}</td><td>${q.answer}</td><td><button data-id="${q.id}" class="secondary" style="width:auto;">Delete</button></td>`;
+        tbody.appendChild(tr);
+      }
+
+      document.querySelectorAll("button[data-id]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          await api(`/api/teacher/questions/${btn.dataset.id}`, "DELETE");
+          loadSettingsAndData();
+        });
+      });
+
+      const stats = await api("/api/teacher/stats");
+      const statsBody = document.querySelector("#statsTable tbody");
+      statsBody.innerHTML = "";
+      for (const row of stats) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${row.category}</td><td>${row.shown || 0}</td><td>${row.correct || 0}</td>`;
+        statsBody.appendChild(tr);
+      }
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const msg = document.getElementById("loginMsg");
+      msg.textContent = "";
+      try {
+        await api("/api/teacher/login", "POST", { password: document.getElementById("passwordInput").value });
+        toggleAdmin(true);
+        await loadSettingsAndData();
+      } catch (err) {
+        msg.textContent = err.message;
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await api("/api/teacher/logout", "POST");
+      toggleAdmin(false);
+    });
+
+    document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
+      const msg = document.getElementById("settingsMsg");
+      msg.textContent = "";
+      try {
+        const payload = {
+          classCode: document.getElementById("classCode").value.trim(),
+          popupCountPerDay: Number(document.getElementById("popupCount").value),
+          intervalMinutes: Number(document.getElementById("intervalMinutes").value),
+          enabledCategories: selectedCategories(),
+        };
+        await api("/api/teacher/settings", "PUT", payload);
+        msg.textContent = "Saved";
+      } catch (err) {
+        msg.textContent = err.message;
+      }
+    });
+
+    document.getElementById("addQuestionBtn").addEventListener("click", async () => {
+      const msg = document.getElementById("questionMsg");
+      msg.textContent = "";
+      try {
+        await api("/api/teacher/questions", "POST", {
+          category: document.getElementById("qCategory").value,
+          prompt: document.getElementById("qPrompt").value.trim(),
+          answer: document.getElementById("qAnswer").value.trim(),
+        });
+        document.getElementById("qPrompt").value = "";
+        document.getElementById("qAnswer").value = "";
+        msg.textContent = "Question added";
+        await loadSettingsAndData();
+      } catch (err) {
+        msg.textContent = err.message;
+      }
+    });
+
+    (async function init() {
+      try {
+        await api("/api/teacher/settings");
+        toggleAdmin(true);
+        await loadSettingsAndData();
+      } catch {
+        toggleAdmin(false);
+      }
+    })();
+  </script>
+  <script src="/pwa.js"></script>
+</body>
+</html>

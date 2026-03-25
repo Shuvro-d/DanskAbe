@@ -1,0 +1,64 @@
+{
+  "settings": {
+    "classCode": "DANSK101",
+    "popupCountPerDay": 6,
+    "intervalMinutes": 60,
+    "enabledCategories": [
+      "time",
+      "day_of_week",
+      "vocab",
+      "phrases"
+    ],
+    "teacherPassword": "teacher123",
+    "datasetVersion": 2
+  },
+  "nextQuestionId": 6,
+  "nextHistoryId": 2,
+  "questions": [
+    {
+      "id": 1,
+      "category": "time",
+      "prompt": "Hvad er klokken?",
+      "answer": "Klokken er to.",
+      "createdAt": "2026-03-25T18:06:42.417Z"
+    },
+    {
+      "id": 2,
+      "category": "day_of_week",
+      "prompt": "Hvilken dag er det i dag?",
+      "answer": "Det er mandag.",
+      "createdAt": "2026-03-25T18:06:42.417Z"
+    },
+    {
+      "id": 3,
+      "category": "vocab",
+      "prompt": "Translate: apple",
+      "answer": "aeble",
+      "createdAt": "2026-03-25T18:06:42.417Z"
+    },
+    {
+      "id": 4,
+      "category": "phrases",
+      "prompt": "Hvordan siger man 'Good morning'?",
+      "answer": "Godmorgen",
+      "createdAt": "2026-03-25T18:06:42.417Z"
+    },
+    {
+      "id": 5,
+      "category": "vocab",
+      "prompt": "What is the danish of Apple",
+      "answer": "æble",
+      "createdAt": "2026-03-25T18:07:55.979Z"
+    }
+  ],
+  "studentHistory": [
+    {
+      "id": 1,
+      "deviceId": "7f1a7307-19d7-4267-9a4c-2a3c0dcb401c",
+      "questionId": 1,
+      "shownAt": "2026-03-25T18:08:16.553Z",
+      "datasetVersion": 2,
+      "correct": true
+    }
+  ]
+}

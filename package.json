@@ -3,13 +3,47 @@
   "version": "0.1.0",
   "private": true,
   "description": "Teacher-controlled Danish popup learning prototype",
-  "main": "src/server.js",
+  "main": "electron/main.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node src/server.js"
+    "dev": "node src/server.js",
+    "desktop": "electron .",
+    "desktop:teacher": "electron . --teacher",
+    "desktop:student": "electron . --student",
+    "build:win": "electron-builder --win nsis"
   },
   "dependencies": {
     "express": "^4.21.2",
     "express-session": "^1.18.1"
+  },
+  "devDependencies": {
+    "electron": "^35.1.4",
+    "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "com.danskabe.desktop",
+    "productName": "DanskeAbe",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "test.html",
+      "manifest-test.webmanifest",
+      "sw-test.js",
+      "public/**/*",
+      "electron/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }

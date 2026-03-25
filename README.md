@@ -24,6 +24,7 @@ Teacher-controlled Danish learning popup app prototype.
 - Backend: Express
 - Database: local JSON file (`data.json`)
 - Frontend: plain HTML/CSS/JS
+- Desktop packaging: Electron + electron-builder
 
 ## Project Structure
 
@@ -86,3 +87,47 @@ You can change both after first launch:
 - Add teacher-created custom categories
 - Add per-student progress dashboard
 - Add question import from CSV
+
+## Windows App Build (Installer)
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Run desktop app directly:
+
+```bash
+npm run desktop
+```
+
+3. Optional role-specific launches:
+
+```bash
+npm run desktop:teacher
+npm run desktop:student
+```
+
+In student mode:
+- Closing the window keeps the app running in background.
+- The app auto-starts on Windows login.
+- Questions continue as desktop notifications when the window is hidden.
+
+4. Build Windows installer (`.exe`):
+
+```bash
+npm run build:win
+```
+
+Role-specific distributable usage:
+- Teacher installer target: launch app with `--teacher` (or use `npm run desktop:teacher` while testing)
+- Student installer target: launch app with `--student` (or use `npm run desktop:student` while testing)
+
+5. Installer output location:
+
+- `dist/` folder
+
+Notes:
+- This creates an installable Windows app so users do not need to use browser links.
+- Student auto-update behavior still depends on internet reachability to the configured update JSON URL.

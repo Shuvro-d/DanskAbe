@@ -330,7 +330,10 @@
     const STUDENT_KEY = "danskabe_test_student_v1";
     const TEACHER_SYNC_KEY = "danskabe_teacher_sync_v1";
     const params = new URLSearchParams(window.location.search);
-    const role = (params.get("role") || "both").toLowerCase();
+    const desktopRole = (window.danskabeDesktop && window.danskabeDesktop.role)
+      ? String(window.danskabeDesktop.role).toLowerCase()
+      : "";
+    const role = (params.get("role") || desktopRole || "both").toLowerCase();
     const prefillCode = params.get("code") || "";
     const prefillSync = params.get("sync") || "";
     let deferredInstallPrompt = null;
@@ -742,6 +745,12 @@
       el.popFeedback.textContent = "";
       el.popup.classList.add("show");
       el.studentStatus.textContent = "Popup shown " + student.shownToday + "/" + store.settings.popupCountPerDay + " today.";
+
+      // Desktop student mode gets OS notifications even when the window is hidden.
+      if (window.danskabeDesktop && typeof window.danskabeDesktop.notify === "function") {
+        const body = q.category + " - " + q.prompt;
+        window.danskabeDesktop.notify("DanskeAbe Question", body, q.prompt).catch(() => {});
+      }
     }
 
     function closePopupAndSchedule() {
@@ -933,6 +942,15 @@
 
     if (role !== "teacher") {
       tryRemoteSync();
+    }
+
+    if (window.danskabeDesktop && typeof window.danskabeDesktop.onFocusQuestion === "function") {
+      window.danskabeDesktop.onFocusQuestion((question) => {
+        if (!question) return;
+        if (!el.popup.classList.contains("show")) {
+          showPopup();
+        }
+      });
     }
 
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
